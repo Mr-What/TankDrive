@@ -14,15 +14,21 @@ motors will be commanded to stop.
 See setup() funtion for pin assignments.
 */
 
-#define COMMAND_TIMEOUT 250   // allowable ms without a command before emergency shutdown
-
 const char TAB = '\t';  // forces #include<Arduino.h> here, needed for following #include's
 
+#define DBH1  // use DBH1 motor driver
+
 #ifdef L289
+  #define COMMAND_TIMEOUT 250   // allowable ms without a command before emergency shutdown
   #include "MotorDrive298.h"
   MotorDrive298 MotL, MotR;
 #else
-  #include "MotorDriveC.h"
+ #ifdef DBH1
+  #include "MotorDriveDBH1.h"
+ #else
+  #include "MotorDriveC.h"  // vicky tan driver module
+ #endif
+
   // MotorDrive parameters :
   //        deadman timeout,
   //        startup pulse duration, stop pause after emergency,
@@ -32,7 +38,6 @@ const char TAB = '\t';  // forces #include<Arduino.h> here, needed for following
 #endif
 
 #include "Command.h"  // can re-use Command from DalekDrive
-
 
 void setup()
 {
@@ -45,8 +50,16 @@ void setup()
   MotR.begin(4,5,3);
   MotL.begin(9,10,11);
 #else
-  MotR.begin(4,3,2);   // vicky tan motor drive module
-  MotL.begin(8,11,2);
+  #ifdef DBH1
+// 9,10 are 16-bit timer, Timer1.  Changing freq on these messes up Servo
+// 3,11 are Timer2, changing freq changes tone() function
+// 5,6  are Timer0, changing freq messes up millis()... DO NOT CHANGE FREQ ON THESE!
+    MotR.begin( 9,5, 3,1,1.0);
+    MotL.begin(10,6,11,2,1.0);
+  #else
+    MotR.begin(4,3,2);   // vicky tan motor drive module
+    MotL.begin(8,11,2);
+  #endif
 #endif
 
   //Serial.begin(9600);
@@ -63,6 +76,16 @@ TCCR2B = TCCR2B & B11111000 | B00000010;    // set timer 2 divisor to     8 for 
 //TCCR2B = TCCR2B & B11111000 | B00000111;    // set timer 2 divisor to  1024 for PWM frequency of    30.64 Hz
 //TCCR2A |= B00000011;  // Fast PWM (default for Arduino)
 //TCCR2A = (TCCR2A & B11111100) | B00000001;  // timer 2, phase corrected PWM, which is 1/2 rate of Fast
+
+//---------------------------------------------- Set PWM frequency for D9 & D10 ------------------------------
+ 
+//TCCR1B = TCCR1B & B11111000 | B00000001;    // set timer 1 divisor to     1 for PWM frequency of 31372.55 Hz
+TCCR1B = TCCR1B & B11111000 | B00000010;    // set timer 1 divisor to     8 for PWM frequency of  3921.16 Hz
+//TCCR1B = TCCR1B & B11111000 | B00000011;    // set timer 1 divisor to    64 for PWM frequency of   490.20 Hz (The DEFAULT)
+//TCCR1B = TCCR1B & B11111000 | B00000100;    // set timer 1 divisor to   256 for PWM frequency of   122.55 Hz
+//TCCR1B = TCCR1B & B11111000 | B00000101;    // set timer 1 divisor to  1024 for PWM frequency of    30.64 Hz
+ 
+
 }
 
 unsigned long prevCommandTime = 0;
