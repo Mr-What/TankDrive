@@ -92,9 +92,10 @@ public:
 
   virtual void stop()
   {
+    analogWrite(Pin.EN , 0);
     analogWrite(Pin.IN1, 0);
     analogWrite(Pin.IN2, 0);
-    analogWrite(Pin.EN , 0);
+    analogWrite(Pin.EN , 255);
     int stoppingTime = (int)ABS(_speed * _decel);
 if(_msgCount>0){_msgCount--;Serial.print(stoppingTime);Serial.println(" ms to stop.");}
     _modeDoneTime = millis() + stoppingTime;

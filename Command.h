@@ -59,8 +59,9 @@ public:
         return(false);
       // commands without values
       case '!':
-      case '^':
       case '?':
+/*
+      case '^':
       case 'a':  // command to set Autonomous in manual mode
       case 'A':
         cmdCode = c;  // return prev command code (if any)
@@ -68,8 +69,6 @@ public:
         return(true);
 
         // codes with values follow : 
-      case 'L':
-      case 'R':
       case 'p':
       case 't':
       case 'm':
@@ -81,6 +80,9 @@ public:
       case 'g':
       case 'r':
       case 'd':
+*/
+      case 'L':
+      case 'R':
         begin();  // clear old command, if any
         code = c; // remember command for wich the following value applies
         return(false);  // wait for value

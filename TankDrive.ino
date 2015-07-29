@@ -1,7 +1,4 @@
 /*
-$URL: svn+ssh://aaron@birenboim.com/home/svn/arduino/sketchbook/TankDrive/TankDrive.ino $
-$Id: TankDrive.ino 136 2013-06-09 14:04:33Z aaron $
-
 Main Tank-tread style drive control loop.
 
 Two H-bridge motor drives, on left and right side
@@ -12,16 +9,28 @@ If commands are not updated reguarly, the
 motors will be commanded to stop.
 
 See setup() funtion for pin assignments.
+
+===========================================================
+
+Aaron Birenboim, http://boim.com    28jul2015
+provided under LGPL license
+
+----------------- summary of LGPL :
+You are free to use and/or alter this code as you need,
+but no guarantee of correctness/appropriateness is implied.
+If you do use this code please retain credit to above as originator.
 */
 
 const char TAB = '\t';  // forces #include<Arduino.h> here, needed for following #include's
 
-#define DBH1  // use DBH1 motor driver
+//#define DBH1  // use DBH1 motor driver
+#define L298  // use DBH1 motor driver
 
-#ifdef L289
-  #define COMMAND_TIMEOUT 250   // allowable ms without a command before emergency shutdown
+#ifdef L298
   #include "MotorDrive298.h"
-  MotorDrive298 MotL, MotR;
+// params are decelRate, deadmanTimeout, startupPulseDuration, stopTimeout, maxPWM
+  MotorDrive MotL(1.0f);
+  MotorDrive MotR(1.0f);
 #else
  #ifdef DBH1
   #include "MotorDriveDBH1.h"
@@ -46,9 +55,9 @@ void setup()
   // Mega has PWM on on pins 2 through 13.
 
 #ifdef L298
-#error code changed.  re-check L298 driver
-  MotR.begin(4,5,3);
-  MotL.begin(9,10,11);
+  // params: EN, IN1, IN2
+  MotR.begin(3,2,4);
+  MotL.begin(11,7,8);
 #else
   #ifdef DBH1
 // 9,10 are 16-bit timer, Timer1.  Changing freq on these messes up Servo
@@ -65,7 +74,11 @@ void setup()
   //Serial.begin(9600);
   Serial.begin(57600);  // nano
   //Serial.begin(115200);  # uno
-  
+
+  // When doing diagnostics, we may want to increase deadman time
+  MotL.setCommandTimeout(6000);
+  MotR.setCommandTimeout(6000);
+
 //---------------------------------------------- Set PWM frequency for D3 & D11 ------------------------------  
 //TCCR2B = TCCR2B & B11111000 | B00000001;    // set timer 2 divisor to     1 for PWM frequency of 31372.55 Hz
 TCCR2B = TCCR2B & B11111000 | B00000010;    // set timer 2 divisor to     8 for PWM frequency of  3921.16 Hz
@@ -80,12 +93,10 @@ TCCR2B = TCCR2B & B11111000 | B00000010;    // set timer 2 divisor to     8 for 
 //---------------------------------------------- Set PWM frequency for D9 & D10 ------------------------------
  
 //TCCR1B = TCCR1B & B11111000 | B00000001;    // set timer 1 divisor to     1 for PWM frequency of 31372.55 Hz
-TCCR1B = TCCR1B & B11111000 | B00000010;    // set timer 1 divisor to     8 for PWM frequency of  3921.16 Hz
+//TCCR1B = TCCR1B & B11111000 | B00000010;    // set timer 1 divisor to     8 for PWM frequency of  3921.16 Hz
 //TCCR1B = TCCR1B & B11111000 | B00000011;    // set timer 1 divisor to    64 for PWM frequency of   490.20 Hz (The DEFAULT)
 //TCCR1B = TCCR1B & B11111000 | B00000100;    // set timer 1 divisor to   256 for PWM frequency of   122.55 Hz
 //TCCR1B = TCCR1B & B11111000 | B00000101;    // set timer 1 divisor to  1024 for PWM frequency of    30.64 Hz
- 
-
 }
 
 unsigned long prevCommandTime = 0;
@@ -100,14 +111,6 @@ int nMsg = 99;
 void loop()
 {
   unsigned long t = millis();
-
-#ifdef L298
-  if (t - prevCommandTime > COMMAND_TIMEOUT)
-    {
-      deadmanReleased();  // timeout, do same as release of a deadman enable
-      prevCommandTime = t;
-    }
-#endif
 
   char code;
   int val;
@@ -127,10 +130,8 @@ if (nMsg>0){nMsg--;Serial.print('>');Serial.print(code);Serial.println(val);}
     }
   else
     { // no command, do housekeeping (misc state update stuff)
-#ifndef L298
       MotL.update(t);
       MotR.update(t);
-#endif
 
       if ((prevCommandTime > 0xfffff000) && (t < 999))
         {  // time counter must have wrapped around
@@ -143,12 +144,4 @@ if (nMsg>0){nMsg--;Serial.print('>');Serial.print(code);Serial.println(val);}
           digitalWrite(13,digitalRead(13)?LOW:HIGH);  // toggle heartbeat
         }
     }
-}
-
-// make sure deadman release stops immediately
-void deadmanReleased()
-{
-  MotR.emergencyStop();
-  MotL.emergencyStop();
-  Serial.println("STOP");
 }

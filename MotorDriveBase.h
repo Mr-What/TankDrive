@@ -1,15 +1,10 @@
-/*
-$URL: svn+ssh://aaron@birenboim.com/home/svn/arduino/sketchbook/DalekDrive/MotorDriveC.h $
-$Id: MotorDriveC.h 143 2015-03-23 00:24:53Z aaron $
-
-Generic interface for "standard" H-Bridge motor driver
-
-*/
+// Generic interface for "standard" H-Bridge motor driver
 
 class MotorDriveBase
 {
   virtual void stop() = 0;
   virtual void emergencyStop() = 0;
+  virtual void setCommandTimeout(int ms) = 0;
 
   
   // Set speed -MAX_PWM for max reverse, MAX_PWM for max forward
