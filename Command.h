@@ -12,10 +12,10 @@ public:
   bool neg;
   char code;
 
-  void begin()
+  void begin(const char c=0)
   {
     nDig=val=0;
-    code=0;
+    code=c;
     neg = false;
   }
   bool get(char &cmdCode, int &cmdVal)
@@ -60,7 +60,6 @@ public:
       // commands without values
       case '!':
       case '?':
-/*
       case '^':
       case 'a':  // command to set Autonomous in manual mode
       case 'A':
@@ -68,7 +67,9 @@ public:
         cmdVal = 0;
         return(true);
 
-        // codes with values follow : 
+      // codes with values follow : 
+      //         might want to leave some of these in here to keep car app from 
+      //         throwing error messages, which could saturate the serial connection
       case 'p':
       case 't':
       case 'm':
@@ -80,12 +81,15 @@ public:
       case 'g':
       case 'r':
       case 'd':
-*/
-      case 'L':
-      case 'R':
         begin();  // clear old command, if any
         code = c; // remember command for wich the following value applies
         return(false);  // wait for value
+
+      // some android version/settings, there is no seperator.
+      // be robust to this
+      case 'L':
+      case 'R':
+
         // seperator
       case ' ':
       case '\t':
@@ -94,17 +98,18 @@ public:
       case 0:
       case ',':
       case ';':
-        if ( code > (char)0 )
-          { // command was in progress, close it out
+        //if ( code > (char)0 )
+        //  { // command was in progress, close it out
             cmdCode = code;
             cmdVal = neg ? -val : val;
-            begin();  // clear for next command
+            begin(c);  // clear for next command
             return(true);  // had a complete command
-          }
+        //  }
       default: // treat any other character as a seperator
         begin();  // clear any partial command
         return(false);  // prev command not complete
       }
   }
 
-} Command;
+};
+

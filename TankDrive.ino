@@ -47,6 +47,7 @@ const char TAB = '\t';  // forces #include<Arduino.h> here, needed for following
 #endif
 
 #include "Command.h"  // can re-use Command from DalekDrive
+CommandReader Command;
 
 void setup()
 {
@@ -76,8 +77,8 @@ void setup()
   //Serial.begin(115200);  # uno
 
   // When doing diagnostics, we may want to increase deadman time
-  MotL.setCommandTimeout(6000);
-  MotR.setCommandTimeout(6000);
+  //MotL.setCommandTimeout(16000);
+  //MotR.setCommandTimeout(16000);
 
 //---------------------------------------------- Set PWM frequency for D3 & D11 ------------------------------  
 //TCCR2B = TCCR2B & B11111000 | B00000001;    // set timer 2 divisor to     1 for PWM frequency of 31372.55 Hz
@@ -106,7 +107,7 @@ unsigned long tFlash = 0;
 
 // for diagnostics, just print a few messages, then be quiet to improve
 // performance when in actual use.
-int nMsg = 99;
+int nMsg = 9;
 
 void loop()
 {
@@ -122,10 +123,12 @@ if (nMsg>0){nMsg--;Serial.print('>');Serial.print(code);Serial.println(val);}
         {
         case 'L': MotL.setSpeed(val,t); break;
         case 'R': MotR.setSpeed(val,t); break;
+        /* app may send bad commands.  just ignore them or they can clog the serial port
         default : 
           MotL.setSpeed(0,t);  // odd command.  just stop
           MotR.setSpeed(0,t);
           Serial.println("<stop");
+        */
         }
     }
   else

@@ -99,11 +99,11 @@ public:
 
   BYTE _msgCount;   // turn off diagnostics after this many messages
   
-  MotorDrive(const int deadTime=250,
-             const int startupTime=5,
+  MotorDrive(const float decel=2.0,
+             const int deadTime=500,
+             const int startupTime=50,
              const int stopTime=3000,
-             const int maxPWM=255,
-             const float decel=2.0f)
+             const int maxPWM=255)
   {
     _deadTime = deadTime; // emergency stop if no command update in this time interval
     _maxPWM = maxPWM;     // don't go over this PWM level.  driver can't do it
@@ -132,8 +132,27 @@ public:
     emergencyStop();
   }
 
-  virtual void setCommandTimeout(int ms) { _deadTime = ms; }
+  virtual void setCommandTimeout(const int ms) { _deadTime = ms; }
+  void setDecelRate(const float msPerCount) { _decel=msPerCount; }
+  void setStartPulseDuration(const int ms) { _startupTime=ms; }
+  void setStopTimeout(const int ms) { _stopTime=ms; }
+  void showDiagnostics(const int n) { _msgCount=n; }
+  void showState()
+  {
+    //BYTE IN1, IN2;  // forward/reverse selectors.
+    //BYTE EN;        // enable pin
+    //SHORT _speed;     // current speed
+    //SHORT _speedCmd;  // commanded speed
+    Serial.print(F("Decel "));Serial.print(_decel);Serial.println(F("ms/count"));
+    //BYTE _mode;
+    //unsigned long _doneTime;  // time when mode automatically transitions
+    Serial.print(F("Deadman Timeout "));Serial.print(_deadTime);Serial.println(F("ms"));
+  //SHORT _maxPWM;      // clip PWM commands to this magnitude
+  //SHORT _startupTime; // ms of full-power pulse to start from dead stop
+  //SHORT _stopTime;    // ms to lock-out commands after emergency stop
 
+  }
+  
   virtual void stop()
   {
     _speedCmd=0;
