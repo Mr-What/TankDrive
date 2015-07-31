@@ -70,18 +70,18 @@ protected:
       {
         digitalWrite(Pin.IN2,0);
 #ifdef DBH1
-        digitalWrite(Pin.IN1,1);
-#else
         analogWrite(Pin.IN1,250);
+#else
+        digitalWrite(Pin.IN1,1);
 #endif
       }
     else
       {
         digitalWrite(Pin.IN1,0);
 #ifdef DBH1
-        digitalWrite(Pin.IN2,1);
-#else
         analogWrite(Pin.IN2,250);
+#else
+        digitalWrite(Pin.IN2,1);
 #endif
       }
   }
@@ -323,4 +323,3 @@ if(_msgCount>0){_msgCount--;Serial.println(F("moving"));}
 #endif
 
 };
-
