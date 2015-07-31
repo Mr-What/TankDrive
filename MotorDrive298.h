@@ -69,12 +69,20 @@ protected:
     if (rev)
       {
         digitalWrite(Pin.IN2,0);
+#ifdef DBH1
         digitalWrite(Pin.IN1,1);
+#else
+        analogWrite(Pin.IN1,250);
+#endif
       }
     else
       {
         digitalWrite(Pin.IN1,0);
+#ifdef DBH1
         digitalWrite(Pin.IN2,1);
+#else
+        analogWrite(Pin.IN2,250);
+#endif
       }
   }
   
@@ -85,6 +93,9 @@ public:
 
     BYTE IN1, IN2;  // forward/reverse selectors.
     BYTE EN;        // enable pin
+#ifdef DBH1
+    BYTE CS;
+#endif
   } Pin;
   SHORT _speed;     // current speed
   SHORT _speedCmd;  // commanded speed
@@ -119,13 +130,20 @@ public:
   // in Arduino, users may set up motor drivers global,
   // but typically initialize pins in start() routine.
   // so I have a seperate begin() to set up pins
-  void begin(const int en, const int in1, const int in2)
+  void begin(const int en, const int in1, const int in2
+  #ifdef DBH1
+    , const int cs
+  #endif
+        )
   {
     pinMode(en,OUTPUT);
     digitalWrite(en,0);   // make sure we are disabled ASAP
     Pin.EN  =en;
     Pin.IN1 =in1;
     Pin.IN2 =in2;
+#ifdef DBH1
+    Pin.CS  =cs;
+#endif
     pinMode(Pin.IN1,OUTPUT);
     pinMode(Pin.IN2,OUTPUT);
     
@@ -296,4 +314,13 @@ if(_msgCount>0){_msgCount--;Serial.println(F("moving"));}
         return;
       }
   }
+
+#ifdef DBH1
+  int getCurrentCounts()
+  {
+    return(analogRead(Pin.CS));
+  }
+#endif
+
 };
+
