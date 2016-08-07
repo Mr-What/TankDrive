@@ -23,6 +23,10 @@ is is closer related to acceleration)
 Driver will apply electrical brake when stopping, but
 try to use freewheeling PWM mode when driving.
 
+I have a WTH3615D that claims L298 logic, but has an extra input labeled PWM.
+Define   WTH3615D to add the PWM pin number to the end of the begin() parameters,
+and try to use this motor driver.
+
 Aaron Birenboim, http://boim.com    28jul2015
 provided under LGPL license
 
@@ -96,6 +100,9 @@ public:
 #ifdef DBH1
     BYTE CS;
 #endif
+#ifdef WTH3615D
+    BYTE PWM;
+#endif
   } Pin;
   SHORT _speed;     // current speed
   SHORT _speedCmd;  // commanded speed
@@ -134,6 +141,9 @@ public:
   #ifdef DBH1
     , const int cs
   #endif
+  #ifdef WTH3615D
+    , const int ppwm
+  #endif
         )
   {
     pinMode(en,OUTPUT);
@@ -143,6 +153,11 @@ public:
     Pin.IN2 =in2;
 #ifdef DBH1
     Pin.CS  =cs;
+#endif
+#ifdef WTH3615D
+    Pin.PWM=ppwm;
+    pinMode(Pin.PWM,OUTPUT);
+    analogWrite(Pin.PWM,0);
 #endif
     pinMode(Pin.IN1,OUTPUT);
     pinMode(Pin.IN2,OUTPUT);
@@ -177,6 +192,9 @@ public:
     digitalWrite(Pin.EN , 0);
     digitalWrite(Pin.IN1, 0);
     digitalWrite(Pin.IN2, 0);
+#ifdef WTH3615D
+    analogWrite(Pin.PWM, 0);
+#endif
     digitalWrite(Pin.EN , 1);
     int stoppingTime = (int)ABS(_speed * _decel);
 if(_msgCount>0){_msgCount--;Serial.print(stoppingTime);Serial.println(" ms to stop.");}
@@ -196,7 +214,7 @@ if(_msgCount>0){_msgCount--;Serial.print(stoppingTime);Serial.println(" ms to st
 
 
   // Set speed -MAX_PWM for max reverse, MAX_PWM for max forward
-  virtual void setSpeed(const int spdReq, long t)
+  virtual void setSpeed(const int spdReq, unsigned long t)
   {
     BYTE prevMode = _mode;
     bool rev;
@@ -204,11 +222,11 @@ if(_msgCount>0){_msgCount--;Serial.print(stoppingTime);Serial.println(" ms to st
       {
       case MOTOR_STOPPING :
         _speedCmd = spdReq;
-        if (t < _doneTime)
+        if ((unsigned long)t < _doneTime)
           {  // make sure things are stopped
             digitalWrite(Pin.IN1,0);
             digitalWrite(Pin.IN2,0);
-            digitalWrite(Pin.EN ,1);
+            digitalWrite(Pin.EN ,1);  // brake
             return;
           }
         // done stoping, continue to STOP mode
@@ -221,6 +239,9 @@ if(_msgCount>0){_msgCount--;Serial.println(F("stopped."));}
         rev = (_mode == MOTOR_START_REV);
         digitalWrite(rev?Pin.IN1:Pin.IN2,1); // don't worry about PWM
         digitalWrite(rev?Pin.IN2:Pin.IN1,0); // this is transistional state
+#ifdef WTH3615D
+        analogWrite(Pin.PWM,255);
+#endif
         digitalWrite(Pin.EN,1);   // hard kick to get started
         _doneTime = t + _startupTime;
         _speedCmd = spdReq;
@@ -241,7 +262,12 @@ Serial.println(rev ? F("REV") : F("FWD"));}
           }
         setReverse(spdReq < 0);
         _speed = _speedCmd = spdReq;
+#ifdef WTH3615D
+        digitalWrite(Pin.EN,1);
+        analogWrite(Pin.PWM,getPWM(_speed));
+#else
         analogWrite(Pin.EN,getPWM(_speed));
+#endif
         _doneTime = t + _deadTime;
 //if(_msgCount>0){_msgCount--;Serial.println(_speed);}
         return;
@@ -268,7 +294,12 @@ Serial.println(rev ? F("REV") : F("FWD"));}
             _mode = (_speedCmd > 0) ? MOTOR_FWD : MOTOR_REV;
             _doneTime = t + _deadTime;
             setReverse(_mode == MOTOR_REV);  // make sure direction is correct
+#ifdef WTH3615D
+            digitalWrite(Pin.EN,1);
+            analogWrite(Pin.PWM,getPWM(_speedCmd));
+#else
             analogWrite(Pin.EN,getPWM(_speedCmd));
+#endif
             if(_msgCount>0){_msgCount--;Serial.print(F("Started"));Serial.println(_speedCmd);}
           }
         return;
@@ -278,7 +309,7 @@ Serial.println(rev ? F("REV") : F("FWD"));}
   // update state, but no new command was received
   // Check if previous command is complete,
   //   and an automatic state transition is needed
-  virtual void update(long t)  // current time, from millis()
+  virtual void update(unsigned long t)  // current time, from millis()
   {
 //Serial.print(F("Update "));  Serial.println(t);
     if ((_doneTime > 0xfffff000) && (t < 999))
