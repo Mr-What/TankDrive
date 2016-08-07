@@ -24,13 +24,13 @@ If you do use this code please retain credit to above as originator.
 const char TAB = '\t';  // forces #include<Arduino.h> here, needed for following #include's
 
 #define L298  // use L298 motor driver
-#define DBH1  // use DBH1 modifications of 298 driver
+//#define DBH1  // use DBH1 modifications of 298 driver
 
 #ifdef L298
   #include "MotorDrive298.h"
 // params are decelRate, deadmanTimeout, startupPulseDuration, stopTimeout, maxPWM
-  MotorDrive MotL(1.0f);
-  MotorDrive MotR(1.0f);
+  MotorDrive MotL(0.5f);
+  MotorDrive MotR(0.5f);
 #else
   //#include "MotorDriveDBH1.h"  // depricated DBH1 specific driver
   #include "MotorDriveC.h"  // vicky tan driver module
@@ -85,7 +85,7 @@ void setup()
 
 //---------------------------------------------- Set PWM frequency for D3 & D11 ------------------------------  
 //TCCR2B = TCCR2B & B11111000 | B00000001;    // set timer 2 divisor to     1 for PWM frequency of 31372.55 Hz
-//TCCR2B = TCCR2B & B11111000 | B00000010;    // set timer 2 divisor to     8 for PWM frequency of  3921.16 Hz
+TCCR2B = TCCR2B & B11111000 | B00000010;    // set timer 2 divisor to     8 for PWM frequency of  3921.16 Hz
 //TCCR2B = TCCR2B & B11111000 | B00000011;    // set timer 2 divisor to    32 for PWM frequency of   980.39 Hz
 //TCCR2B = TCCR2B & B11111000 | B00000100;    // set timer 2 divisor to    64 for PWM frequency of   490.20 Hz
 //TCCR2B = TCCR2B & B11111000 | B00000101;    // set timer 2 divisor to   128 for PWM frequency of   245.10 Hz
@@ -97,7 +97,7 @@ void setup()
 //---------------------------------------------- Set PWM frequency for D9 & D10 ------------------------------
  
 //TCCR1B = TCCR1B & B11111000 | B00000001;    // set timer 1 divisor to     1 for PWM frequency of 31372.55 Hz
-TCCR1B = TCCR1B & B11111000 | B00000010;    // set timer 1 divisor to     8 for PWM frequency of  3921.16 Hz
+//TCCR1B = TCCR1B & B11111000 | B00000010;    // set timer 1 divisor to     8 for PWM frequency of  3921.16 Hz
 //TCCR1B = TCCR1B & B11111000 | B00000011;    // set timer 1 divisor to    64 for PWM frequency of   490.20 Hz (The DEFAULT)
 //TCCR1B = TCCR1B & B11111000 | B00000100;    // set timer 1 divisor to   256 for PWM frequency of   122.55 Hz
 //TCCR1B = TCCR1B & B11111000 | B00000101;    // set timer 1 divisor to  1024 for PWM frequency of    30.64 Hz

@@ -236,8 +236,7 @@ Serial.println(rev ? F("REV") : F("FWD"));}
              ((spdReq > 0) && (prevMode == MOTOR_REV)) )
           {
             stop();
-            _speedCmd = getPWM(spdReq);
-            if (spdReq < 0) _speedCmd = -_speedCmd;
+            _speedCmd = clipPWM(spdReq);
             return;
           }
         setReverse(spdReq < 0);
