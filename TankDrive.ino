@@ -24,7 +24,12 @@ If you do use this code please retain credit to above as originator.
 const char TAB = '\t';  // forces #include<Arduino.h> here, needed for following #include's
 
 #define L298  // use L298 motor driver
-#define DBH1  // use DBH1 modifications of 298 driver
+//#define DBH1  // use DBH1 modifications of 298 driver
+
+// www.wljtech.com WTH3615D motor driver claims to use "L298 logic", but it has
+// in1, in2, en AND a PWM input.  Set this to use the 298 driver,
+// but with extra logic for the extra PWM pin
+#define WTH3615D
 
 #ifdef L298
   #include "MotorDrive298.h"
@@ -62,9 +67,15 @@ void setup()
   MotR.begin( 9,5, 3,1);
   MotL.begin(10,6,11,2);
  #else
+  #ifdef WTH3615D
+  // params : EN, IN1, IN2, PWM
+  MotR.begin(5,2,4,3);
+  MotL.begin(9,7,8,11);
+  #else
   // params: EN, IN1, IN2
   MotR.begin(3,2,4);
   MotL.begin(11,7,8);
+  #endif
  #endif
 #else
     // depricated DBH1 specific driver
@@ -97,7 +108,7 @@ void setup()
 //---------------------------------------------- Set PWM frequency for D9 & D10 ------------------------------
  
 //TCCR1B = TCCR1B & B11111000 | B00000001;    // set timer 1 divisor to     1 for PWM frequency of 31372.55 Hz
-TCCR1B = TCCR1B & B11111000 | B00000010;    // set timer 1 divisor to     8 for PWM frequency of  3921.16 Hz
+//TCCR1B = TCCR1B & B11111000 | B00000010;    // set timer 1 divisor to     8 for PWM frequency of  3921.16 Hz
 //TCCR1B = TCCR1B & B11111000 | B00000011;    // set timer 1 divisor to    64 for PWM frequency of   490.20 Hz (The DEFAULT)
 //TCCR1B = TCCR1B & B11111000 | B00000100;    // set timer 1 divisor to   256 for PWM frequency of   122.55 Hz
 //TCCR1B = TCCR1B & B11111000 | B00000101;    // set timer 1 divisor to  1024 for PWM frequency of    30.64 Hz

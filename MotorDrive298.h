@@ -23,6 +23,10 @@ is is closer related to acceleration)
 Driver will apply electrical brake when stopping, but
 try to use freewheeling PWM mode when driving.
 
+I have a WTH3615D that claims L298 logic, but has an extra input labeled PWM.
+Define   WTH3615D to add the PWM pin number to the end of the begin() parameters,
+and try to use this motor driver.
+
 Aaron Birenboim, http://boim.com    28jul2015
 provided under LGPL license
 
@@ -69,19 +73,27 @@ protected:
     if (rev)
       {
         digitalWrite(Pin.IN2,0);
-#ifdef DBH1
+#ifdef WTH3615D
         digitalWrite(Pin.IN1,1);
-#else
+#else        
+ #ifdef DBH1
+        digitalWrite(Pin.IN1,1);
+ #else
         analogWrite(Pin.IN1,250);
+ #endif
 #endif
       }
     else
       {
         digitalWrite(Pin.IN1,0);
-#ifdef DBH1
+#ifdef WTH3615D
         digitalWrite(Pin.IN2,1);
 #else
+ #ifdef DBH1
+        digitalWrite(Pin.IN2,1);
+ #else
         analogWrite(Pin.IN2,250);
+ #endif
 #endif
       }
   }
@@ -95,6 +107,9 @@ public:
     BYTE EN;        // enable pin
 #ifdef DBH1
     BYTE CS;
+#endif
+#ifdef WTH3615D
+    BYTE pPWM;
 #endif
   } Pin;
   SHORT _speed;     // current speed
@@ -134,6 +149,9 @@ public:
   #ifdef DBH1
     , const int cs
   #endif
+  #ifdef WTH3615D
+    , const int ppwm
+  #endif
         )
   {
     pinMode(en,OUTPUT);
@@ -143,6 +161,11 @@ public:
     Pin.IN2 =in2;
 #ifdef DBH1
     Pin.CS  =cs;
+#endif
+#ifdef WTH3615D
+    Pin.pPWM=ppwm;
+    pinMode(Pin.pPWM,OUTPUT);
+    analogWrite(Pin.pPWM,0);
 #endif
     pinMode(Pin.IN1,OUTPUT);
     pinMode(Pin.IN2,OUTPUT);
